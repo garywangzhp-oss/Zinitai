@@ -1,5 +1,8 @@
 # 紫泥台 · 合同脱敏工具
 
+[![Release](https://img.shields.io/github/v/release/garywangzhp-oss/Zinitai)](https://github.com/garywangzhp-oss/Zinitai/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-Windows-2C5F8A)](#下载)
+
 把 Word / PDF 合同里的敏感信息（金额、证件号、账号……）自动识别并**真抹除**，
 生成可对外分享的脱敏稿 + 映射表 + 审查报告。**纯本地离线，数据不出机器。**
 
@@ -7,6 +10,18 @@
 > 与这个工具要做的事同源：把合同里的敏感信息封存起来，再交出去。
 
 ---
+
+## 下载
+
+**不写代码、只想用：直接下打包好的 Windows 版，无需安装 Python。**
+
+👉 **[下载最新版（Windows 64 位）](https://github.com/garywangzhp-oss/Zinitai/releases/latest)**
+
+- 单文件绿色版，双击即用；
+- 未做代码签名，SmartScreen 可能提示「未知发布者」，选择「仍要运行」即可；
+- 首次冷启动需解包，约几秒。
+
+> 想在其他平台跑、或想改代码：走下面的「从源码安装」。
 
 ## 为什么是它
 
@@ -18,7 +33,7 @@
 - **可逆** —— 映射表（占位符 ↔ 原文）就是还原接口，`restore.py` 一键换回原文。
 - **纯本地** —— 无云端调用、无遥测、全程不联网。
 
-## 安装
+## 从源码安装
 
 ```
 python -m venv .venv
@@ -106,6 +121,15 @@ restore.py    还原入口
 gui/          pywebview 桌面窗口（app.py + index.html）
 tests/        合成样本生成与验证
 ```
+
+## 从源码打包
+
+```
+pip install pyinstaller
+python -m PyInstaller 紫泥台.spec --noconfirm
+```
+
+产物为单文件 `dist\紫泥台.exe`。
 
 ## 已知限制（MVP）
 
