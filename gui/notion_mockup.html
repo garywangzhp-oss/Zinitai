@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>熊猫护卷 · Notion 风格探索稿</title>
+<style>
+/* ============ Notion 设计令牌 ============ */
+:root{
+  --text:#37352F;               /* 暖深灰，不是纯黑 */
+  --text2:rgba(55,53,47,.65);
+  --text3:rgba(55,53,47,.4);
+  --hover:rgba(55,53,47,.08);
+  --line:#EDECE9;
+  --sidebar:#F7F7F5;
+  --blue:#2383E2;
+  --font:ui-sans-serif,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font:14px/1.5 var(--font);color:var(--text);display:flex;height:100vh;overflow:hidden;background:#fff}
+
+/* ============ 侧栏 ============ */
+.sidebar{
+  flex:none;width:230px;background:var(--sidebar);padding:10px 8px 12px;
+  display:flex;flex-direction:column;gap:1px;
+}
+.ws{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer}
+.ws:hover{background:var(--hover)}
+.ws .avatar{
+  width:20px;height:20px;border-radius:4px;background:#2F3437;color:#fff;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+}
+.ws .nm{font-weight:600;font-size:13.5px}
+.side-btn{
+  display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:5px;cursor:pointer;
+  font-size:13px;color:var(--text2);
+}
+.side-btn:hover{background:var(--hover);color:var(--text)}
+.side-sec{
+  display:flex;align-items:center;gap:6px;padding:10px 8px 4px;font-size:11.5px;font-weight:600;
+  color:var(--text3);cursor:pointer;
+}
+.side-page{
+  display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:5px;cursor:pointer;
+  font-size:13.5px;
+}
+.side-page:hover{background:var(--hover)}
+.side-page .em{font-size:14px;width:18px;text-align:center}
+.side-page.active{background:rgba(35,131,226,.12);font-weight:500}
+.side-foot{margin-top:auto;padding:8px;font-size:11px;color:var(--text3)}
+
+/* ============ 主区 ============ */
+.main{flex:1;min-width:0;overflow-y:auto}
+.crumbs{
+  position:sticky;top:0;z-index:5;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);
+  display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:12.5px;color:var(--text2);
+}
+.crumbs .dot{color:var(--text3)}
+.crumbs .sp{flex:1}
+.crumbs .btn{
+  border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--text2);
+  padding:3px 8px;border-radius:4px;cursor:pointer;
+}
+.crumbs .btn:hover{background:var(--hover);color:var(--text)}
+.crumbs .btn.dark{background:var(--text);color:#fff}
+.crumbs .btn.dark:hover{background:#000}
+
+.page{max-width:860px;margin:0 auto;padding:36px 40px 80px}
+.picon{font-size:42px;margin-bottom:6px}
+.ptitle{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-bottom:10px}
+
+.props{margin:2px 0 26px;display:flex;flex-direction:column;gap:4px}
+.prop{display:flex;align-items:center;gap:10px;min-height:28px}
+.prop .k{flex:none;width:110px;font-size:12.5px;color:var(--text3);padding:2px 8px;border-radius:4px}
+.prop .k:hover{background:var(--hover)}
+.prop .v{display:flex;align-items:center;gap:6px;font-size:13px}
+
+.chip{
+  font-size:12px;padding:1px 8px;border-radius:3px;font-weight:500;
+}
+.c-amount{background:#FFE2DD;color:#93300E}
+.c-idcard{background:#D3E5EF;color:#337EA9}
+.c-phone{background:#FBF3DB;color:#8D6B16}
+.c-bank{background:#DBEDDB;color:#448361}
+.c-credit{background:#E8DEEE;color:#6940A5}
+.c-email{background:#D6EDE4;color:#1B6554}
+.c-gray{background:#E3E2E0;color:#37352F}
+
+.hr{height:1px;background:var(--line);margin:6px 0 10px}
+.h2{display:flex;align-items:center;gap:8px;font-size:16.5px;font-weight:600;margin:4px 0 8px}
+.h2 .hnd{color:var(--text3);font-size:12px;cursor:grab;opacity:0;transition:opacity .1s}
+.h2:hover .hnd{opacity:1}
+
+/* 数据库表 */
+.db{border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.db .thead,.db .trow{
+  display:grid;grid-template-columns:44px 110px 230px 1fr 74px;align-items:center;
+}
+.db .thead{
+  background:#F7F7F5;font-size:12px;color:var(--text2);border-bottom:1px solid var(--line);
+}
+.db .thead>div{padding:7px 10px;display:flex;align-items:center;gap:5px;min-width:0}
+.db .trow{border-bottom:1px solid var(--line);position:relative;min-height:34px}
+.db .trow:last-child{border-bottom:0}
+.db .trow:hover{background:rgba(55,53,47,.04)}
+.db .trow .hnd{
+  position:absolute;left:-22px;top:50%;transform:translateY(-50%);color:var(--text3);
+  cursor:grab;opacity:0;font-size:11px;letter-spacing:-1px;
+}
+.db .trow:hover .hnd{opacity:1}
+.db .cell{padding:6px 10px;font-size:13px;min-width:0;display:flex;align-items:center;gap:8px}
+.db .cell.o{font-weight:500}
+.db .cell.c{color:var(--text2);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.db .cell.c mark{background:none;color:var(--text);font-weight:600}
+.db .cell.l{color:var(--text2);font-size:12.5px}
+.db .rowchk{
+  width:15px;height:15px;appearance:none;-webkit-appearance:none;border:1.4px solid rgba(55,53,47,.3);
+  border-radius:3px;cursor:pointer;background:#fff;margin:0 auto;display:block;
+}
+.db .rowchk:checked{
+  background:var(--blue) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 11 11"><path d="M2 5.8 4.4 8.2 9 3.2" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>') center no-repeat;
+  border-color:var(--blue);
+}
+.db .newrow{padding:7px 10px;font-size:13px;color:var(--text3);cursor:pointer}
+.db .newrow:hover{background:var(--hover)}
+
+.sumline{display:flex;gap:18px;padding:9px 10px;font-size:12px;color:var(--text3)}
+.sumline b{color:var(--text2)}
+
+.callout{
+  display:flex;gap:10px;background:rgba(35,131,226,.07);border-radius:4px;
+  padding:10px 12px;font-size:13px;margin-top:22px;
+}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="ws"><span class="avatar">🐼</span><span class="nm">熊猫护卷</span></div>
+  <div class="side-btn">⌕　搜索</div>
+  <div class="side-btn">⟳　更新</div>
+  <div class="side-sec">档案</div>
+  <div class="side-page active"><span class="em">📄</span>8月对外批次</div>
+  <div class="side-page"><span class="em">📁</span>归档批次</div>
+  <div class="side-page"><span class="em">🧾</span>映射表库</div>
+  <div class="side-sec">工具</div>
+  <div class="side-page"><span class="em">📖</span>排除词库</div>
+  <div class="side-page"><span class="em">🧠</span>NER 设置</div>
+  <div class="side-foot">作者：Gary Wang　版本 V0.10</div>
+</aside>
+
+<main class="main">
+  <div class="crumbs">
+    🐼 熊猫护卷 <span class="dot">/</span> 档案 <span class="dot">/</span> 8月对外批次
+    <span class="sp"></span>
+    <button class="btn">分享</button>
+    <button class="btn">⭐</button>
+    <button class="btn dark" id="btn-apply">执行抹除（7）</button>
+  </div>
+
+  <div class="page">
+    <div class="picon">🐼</div>
+    <div class="ptitle">8月对外批次</div>
+
+    <div class="props">
+      <div class="prop"><span class="k">状态</span><span class="v"><span class="chip c-gray">审查中</span></span></div>
+      <div class="prop"><span class="k">文件</span><span class="v">Purchase+Contract-NWC-704106-0824-Final.pdf</span></div>
+      <div class="prop"><span class="k">命中 / 已勾选</span><span class="v num">7 / 7 处</span></div>
+      <div class="prop"><span class="k">输出目录</span><span class="v" style="color:var(--blue);text-decoration:underline;text-underline-offset:2px;cursor:pointer">D:\Dev Download</span></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="h2"><span class="hnd">⠿</span>命中清单 <span style="font-size:11.5px;font-weight:400;color:var(--text3)">— 勾选 = 抹除，取消 = 排除</span></div>
+
+    <div class="db">
+      <div class="thead">
+        <div><input type="checkbox" class="rowchk" checked style="margin:0 auto;display:block"></div>
+        <div>类型 ⌄</div>
+        <div>原文</div>
+        <div>上下文</div>
+        <div>位置 ⌄</div>
+      </div>
+      <div id="rows"></div>
+      <div class="newrow">＋ 新建</div>
+    </div>
+
+    <div class="sumline num">
+      <span><b>7</b> 处命中</span><span>金额 5</span><span>电话 1</span><span>邮箱 1</span><span>已排除 0</span>
+    </div>
+
+    <div class="callout">
+      <span>💡</span>
+      <span>词库自动排除 1 处：服务热线 <b>400-810-1996</b>（精确匹配）。执行抹除后生成映射表，可随时还原。</span>
+    </div>
+  </div>
+</main>
+
+<script>
+const HITS = [
+  {t:"PHONE",  k:"电话", cls:"c-phone",  o:"13800000000",       c:"…Tel: +86-「13800000000」…", l:"第1页"},
+  {t:"EMAIL",  k:"邮箱", cls:"c-email",  o:"contact@example.com",c:"…Email: 「contact@example.com」…", l:"第1页"},
+  {t:"AMOUNT", k:"金额", cls:"c-amount", o:"CNY 449,770.46",    c:"…「CNY 449,770.46」…", l:"第1页"},
+  {t:"AMOUNT", k:"金额", cls:"c-amount", o:"CNY32,449.54",      c:"…「CNY32,449.54」…", l:"第1页"},
+  {t:"AMOUNT", k:"金额", cls:"c-amount", o:"CNY482,220.00",     c:"…「CNY482,220.00」…", l:"第1页"},
+  {t:"AMOUNT", k:"金额", cls:"c-amount", o:"人民币1,000.00 元",  c:"…甲方应按每日「人民币1,000.00 元」…", l:"第2页"},
+  {t:"AMOUNT", k:"金额", cls:"c-amount", o:"RMB 1,000.00",      c:"…[「RMB 1,000.00」] per day…", l:"第3页"},
+];
+const state = { excluded:new Set() };
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function render(){
+  const rows = $("#rows"); rows.innerHTML = "";
+  for(const h of HITS){
+    const key = h.t + h.o;
+    const ex = state.excluded.has(key);
+    const row = document.createElement("div");
+    row.className = "trow";
+    row.innerHTML = `
+      <span class="hnd">⠿</span>
+      <div class="cell"><input type="checkbox" class="rowchk" ${ex?"":"checked"} aria-label="抹除该处"></div>
+      <div class="cell"><span class="chip ${h.cls}">${h.k}</span></div>
+      <div class="cell o" style="${ex?"text-decoration:line-through;color:var(--text3)":""}">${esc(h.o)}</div>
+      <div class="cell c">${esc(h.c).replace("「"+esc(h.o)+"」","「<mark>"+esc(h.o)+"</mark>」")}</div>
+      <div class="cell l num">${h.l}</div>`;
+    row.querySelector(".rowchk").addEventListener("change", ev=>{
+      if(ev.target.checked) state.excluded.delete(key); else state.excluded.add(key);
+      render();
+    });
+    rows.appendChild(row);
+  }
+  const n = HITS.length - state.excluded.size;
+  $("#btn-apply").textContent = `执行抹除（${n}）`;
+}
+render();
+</script>
+</body>
+</html>

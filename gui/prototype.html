@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>合同脱敏台 · 原型</title>
+<style>
+/* ============ 令牌 ============ */
+:root{
+  --paper:#FAFAF7;          /* 冷白纸面 */
+  --paper-raise:#FFFFFF;    /* 提亮纸层 */
+  --ink:#1C1C1A;            /* 墨黑 */
+  --ink-2:#56564F;          /* 次级墨 */
+  --ink-3:#8B8B80;          /* 弱墨（仅用于大字号或非关键处）*/
+  --rule:#E3E1D8;           /* 细规则线 */
+  --rule-2:#D2CFC2;
+  --cinnabar:#C03A2B;       /* 印泥朱红：只给相位、主按钮、命中高亮 */
+  --cinnabar-wash:rgba(192,58,43,.10);
+  --cinnabar-deep:#9E2F22;
+  --seal-green:#4A7043;     /* 苔绿：银行账号 */
+  --lanulin:#2C5F8A;        /* 黛蓝：身份证 */
+  --ochre:#96662F;          /* 赭石：电话（加深以满足白字 4.5:1）*/
+  --violetgray:#6B5B7A;     /* 紫灰：信用代码 */
+  --amber:#8A6D1F;          /* 自动排除注记 */
+  --ok:#3D6B35;
+  --err:#9E2F22;
+  --sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Source Han Sans SC",sans-serif;
+  --song:"SimSun","Songti SC","Source Han Serif SC","NSimSun",serif;
+  --mono-ui:Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
+body{
+  min-height:100%;background:var(--paper);color:var(--ink);
+  font:14px/1.65 var(--sans);
+  min-width:860px;
+}
+::selection{background:var(--cinnabar-wash);color:var(--cinnabar-deep)}
+:focus-visible{outline:2px solid var(--cinnabar);outline-offset:2px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--paper)}
+::-webkit-scrollbar-thumb{background:var(--rule-2);border:2px solid var(--paper)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-3)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.song{font-family:var(--song)}
+
+/* ============ 案卷头 ============ */
+.masthead{
+  display:flex;align-items:stretch;gap:0;
+  border-bottom:2px solid var(--ink);
+  background:var(--paper);
+  position:sticky;top:0;z-index:30;
+}
+.brand{
+  padding:14px 22px 12px;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;justify-content:center;min-width:172px;
+}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.02em}
+.brand small{color:var(--ink-2);font-size:11px;letter-spacing:.06em;margin-top:1px}
+
+.phaseband{display:flex;align-items:center;gap:0;padding:0 8px;border-right:1px solid var(--rule)}
+.phase{
+  display:flex;align-items:center;gap:8px;padding:14px 16px 12px;
+  color:var(--ink-2);position:relative;
+}
+.phase .pip{
+  width:12px;height:12px;border:1.5px solid var(--ink-2);background:transparent;
+  flex:none;transition:background .12s ease-out,border-color .12s ease-out;
+}
+.phase .name{font-size:13px;letter-spacing:.08em}
+.phase[aria-current="step"]{color:var(--ink)}
+.phase[aria-current="step"] .pip{background:var(--cinnabar);border-color:var(--cinnabar)}
+.phase[aria-current="step"]::after{
+  content:"";position:absolute;left:12px;right:12px;bottom:-2px;height:2px;background:var(--cinnabar);
+}
+.phase[data-done="1"] .pip{border-color:var(--ink);background:var(--ink)}
+.phase:hover .name{color:var(--ink)}
+.phasejoin{width:26px;height:1px;background:var(--rule-2);flex:none}
+
+.tally{
+  margin-left:auto;display:flex;align-items:stretch;
+}
+.tally .seg{
+  padding:10px 18px 8px;border-left:1px solid var(--rule);
+  display:flex;flex-direction:column;justify-content:center;min-width:86px;
+}
+.tally .seg b{font-size:19px;line-height:1.2;font-weight:700}
+.tally .seg span{font-size:11px;color:var(--ink-2);letter-spacing:.08em}
+.tally .seg.warn b{color:var(--cinnabar)}
+.typetally{
+  display:flex;flex-direction:column;justify-content:center;gap:3px;
+  border-left:1px solid var(--rule);padding:8px 18px;min-width:236px;
+}
+.typetally .row{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--ink-2)}
+.typetally .row .dot{width:8px;height:8px;flex:none;align-self:center}
+.typetally .row b{margin-left:auto;font-size:13px;color:var(--ink)}
+
+/* ============ 主体 ============ */
+.workspace{display:flex;min-height:calc(100vh - 113px)}
+
+/* 文件侧签 */
+.files{
+  width:264px;flex:none;border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;background:var(--paper);
+}
+.files .head{
+  padding:14px 18px 10px;font-size:11px;letter-spacing:.14em;color:var(--ink-2);
+  border-bottom:1px solid var(--rule);
+}
+.filelist{flex:1;overflow-y:auto}
+.filerow{
+  width:100%;text-align:left;display:flex;align-items:center;gap:10px;
+  padding:12px 16px;border-bottom:1px solid var(--rule);
+  transition:background .1s ease-out;
+}
+.filerow:hover{background:var(--paper-raise)}
+.filerow[aria-selected="true"]{background:var(--paper-raise)}
+.filerow[aria-selected="true"] .sq{background:var(--cinnabar)}
+.filerow .sq{width:8px;height:8px;flex:none;border:1px solid var(--ink-3)}
+.filerow .meta{flex:1;min-width:0}
+.filerow .fname{
+  font-family:var(--song);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.filerow .fsub{font-size:11px;color:var(--ink-2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filerow .fcount{font-size:16px;font-weight:700}
+.filerow.is-err .fname{color:var(--err)}
+.files .foot{
+  border-top:1px solid var(--rule);padding:10px 16px;display:flex;flex-direction:column;gap:8px;
+}
+.toggleline{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ink-2)}
+.toggleline .switch{
+  width:30px;height:16px;border:1px solid var(--ink-2);position:relative;flex:none;background:var(--paper);
+}
+.toggleline .switch::after{
+  content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;background:var(--ink-2);
+  transition:transform .12s ease-out;
+}
+.toggleline .switch[aria-checked="true"]{border-color:var(--ink)}
+.toggleline .switch[aria-checked="true"]::after{transform:translateX(14px);background:var(--ink)}
+.linkish{color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-size:12px}
+.linkish:hover{color:var(--cinnabar-deep)}
+
+/* 命中结果列 */
+.hits{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper-raise)}
+.hitsbar{
+  display:flex;align-items:center;gap:6px;padding:10px 22px;border-bottom:1px solid var(--rule);
+  flex-wrap:wrap;
+}
+.chip{
+  border:1px solid var(--rule-2);padding:3px 12px;font-size:12px;color:var(--ink-2);
+  transition:all .1s ease-out;
+}
+.chip:hover{border-color:var(--ink-2);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.hitsbar .spacer{flex:1}
+.hitsbar .selinfo{font-size:12px;color:var(--ink-2)}
+.hitsbar .selinfo b{color:var(--ink)}
+
+.hitlist{flex:1;overflow-y:auto}
+.hitrow{
+  display:flex;align-items:flex-start;gap:14px;padding:13px 22px 12px;
+  border-bottom:1px solid var(--rule);
+  transition:opacity .12s ease-out;
+}
+.hitrow:hover{background:var(--paper)}
+.hitrow .check{margin-top:4px;flex:none;accent-color:var(--cinnabar);width:15px;height:15px}
+.hitrow .body{flex:1;min-width:0}
+.hitrow .line1{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tag{
+  font-size:11px;letter-spacing:.1em;color:#fff;padding:2px 8px 1px;flex:none;
+}
+.tag.t-amount{background:var(--cinnabar)}
+.tag.t-idcard{background:var(--lanulin)}
+.tag.t-phone{background:var(--ochre)}
+.tag.t-bank{background:var(--seal-green)}
+.tag.t-credit{background:var(--violetgray)}
+.hitrow .orig{
+  font-family:var(--song);font-size:16.5px;
+  background:var(--cinnabar-wash);padding:0 4px;
+}
+.hitrow .loc{margin-left:auto;font-size:11px;color:var(--ink-2)}
+.hitrow .ctx{font-size:12.5px;color:var(--ink-2);margin-top:3px}
+.hitrow .ctx mark{background:none;color:var(--ink);font-family:var(--song)}
+.hitrow.excluded{opacity:.45}
+.hitrow.excluded .orig{background:none}
+.hitrow.excluded .body{position:relative}
+.hitrow .exlabel{display:none;font-size:11px;color:var(--ink-2);margin-left:8px}
+.hitrow.excluded .exlabel{display:inline}
+
+.autonote{
+  margin:14px 22px;border:1px solid var(--rule-2);padding:10px 14px;
+  font-size:12px;color:var(--amber);
+}
+.autonote b{font-weight:600}
+
+/* 底部执行栏 */
+.actionbar{
+  border-top:2px solid var(--ink);background:var(--paper);
+  display:flex;align-items:center;gap:14px;padding:12px 22px;
+  position:sticky;bottom:0;z-index:30;
+}
+.actionbar .pending{font-size:13px;color:var(--ink-2)}
+.actionbar .pending b{color:var(--ink);font-size:15px}
+.actionbar .spacer{flex:1}
+.btn{
+  border:1px solid var(--ink);padding:8px 18px;font-size:13px;letter-spacing:.04em;background:var(--paper-raise);
+  transition:all .1s ease-out;
+}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.primary{
+  background:var(--cinnabar);border-color:var(--cinnabar);color:#fff;font-weight:600;
+}
+.btn.primary:hover{background:var(--cinnabar-deep);border-color:var(--cinnabar-deep)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* ============ 模态 ============ */
+.veil{
+  position:fixed;inset:0;background:rgba(28,28,26,.42);z-index:60;
+  display:none;align-items:center;justify-content:center;
+}
+.veil.open{display:flex}
+.dialog{
+  width:520px;background:var(--paper);border:1px solid var(--ink);
+  box-shadow:0 0 0 4px var(--paper), 0 0 0 5px var(--rule-2);
+}
+.dialog .dhead{padding:16px 22px 0;font-size:16px;font-weight:700}
+.dialog .dbody{padding:12px 22px 4px;font-size:13px;color:var(--ink-2)}
+.dialog ul{list-style:none;margin:10px 0 0}
+.dialog li{
+  display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--rule);font-size:13px;color:var(--ink)
+}
+.dialog li .num-r{margin-left:auto;color:var(--ink-2)}
+.dialog .dwarn{
+  margin-top:12px;border:1px solid var(--rule-2);padding:9px 12px;font-size:12px;color:var(--cinnabar-deep)
+}
+.dialog .dfoot{display:flex;justify-content:flex-end;gap:10px;padding:16px 22px 20px}
+
+/* ============ 完成屏 ============ */
+.done-wrap{padding:34px 46px;max-width:880px}
+.done-stamp{
+  display:inline-flex;align-items:baseline;gap:14px;
+  border:2.5px solid var(--cinnabar);color:var(--cinnabar-deep);
+  padding:10px 22px;margin-bottom:8px;
+  position:relative;transform:rotate(-2deg);
+}
+.done-stamp::after{
+  content:"";position:absolute;inset:0;border:2px solid var(--cinnabar);
+  opacity:.20;transform:translate(4px,3px) rotate(.6deg);pointer-events:none;
+}
+.done-stamp b{font-family:var(--song);font-size:26px;letter-spacing:.14em}
+.done-stamp span{font-size:12px;color:var(--ink-2)}
+.done-sub{color:var(--ink-2);font-size:13px;margin-bottom:22px}
+.outrow{
+  display:flex;align-items:center;gap:14px;padding:13px 4px;border-top:1px solid var(--rule);
+}
+.outrow:first-of-type{border-top:2px solid var(--ink)}
+.outrow .oname{font-family:var(--song);font-size:14.5px}
+.outrow .osub{font-size:12px;color:var(--ink-2)}
+.outrow .ospacer{flex:1}
+.outrow .btn{padding:5px 14px;font-size:12px}
+.mapview{
+  margin-top:10px;border:1px solid var(--rule-2);background:var(--paper);
+  padding:14px 16px;font:12px/1.7 var(--mono-ui);color:var(--ink-2);
+  white-space:pre;overflow-x:auto;display:none;
+}
+.mapview.open{display:block}
+
+/* ============ 空态 / 扫描态 ============ */
+.empty-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:60px 20px}
+.dropzone{
+  width:640px;max-width:82%;border:2px dashed var(--rule-2);
+  padding:58px 30px;text-align:center;transition:border-color .12s ease-out,background .12s ease-out;
+}
+.dropzone:hover{border-color:var(--ink-2)}
+.dropzone h2{font-family:var(--song);font-size:30px;font-weight:400;letter-spacing:.06em}
+.dropzone p{color:var(--ink-2);font-size:13px;margin:10px 0 20px}
+.scanline{
+  font-size:13px;color:var(--ink-2);display:flex;gap:10px;align-items:baseline;
+}
+.scanline .bar{flex:1;max-width:420px;height:14px;border:1px solid var(--ink-2);position:relative;overflow:hidden}
+.scanline .bar i{position:absolute;top:0;bottom:0;left:0;background:var(--cinnabar);width:0}
+@keyframes sweep{from{width:4%}to{width:72%}}
+.scanline .bar i{animation:sweep 2.4s ease-out forwards}
+
+/* 错误条 */
+.errline{
+  margin:12px 22px;border:1px solid var(--err);color:var(--err);
+  font-size:12px;padding:9px 13px;display:none;
+}
+.errline.open{display:block}
+
+/* 白闪 */
+.flash{position:fixed;inset:0;background:#fff;z-index:90;opacity:0;pointer-events:none}
+.flash.go{animation:flashout .5s ease-out forwards}
+@keyframes flashout{0%{opacity:1}100%{opacity:0}}
+
+/* 原型演示导航 */
+.demonav{
+  position:fixed;right:14px;bottom:64px;z-index:80;display:flex;flex-direction:column;gap:1px;
+  border:1px solid var(--rule-2);background:var(--paper-raise);
+  box-shadow:0 0 0 3px var(--paper), 0 0 0 4px var(--rule-2);
+}
+.demonav button{font-size:11px;color:var(--ink-2);padding:6px 12px;text-align:left}
+.demonav button:hover{color:var(--cinnabar-deep);background:var(--paper)}
+.demonav .cap{font-size:11px;color:var(--ink-2);padding:5px 12px 3px;border-bottom:1px solid var(--rule);letter-spacing:.12em}
+
+/* 词库抽屉 */
+.drawer{
+  position:fixed;top:0;right:-360px;width:340px;bottom:0;background:var(--paper-raise);
+  border-left:1px solid var(--ink);z-index:70;transition:right .18s ease-out;
+  display:flex;flex-direction:column;
+}
+.drawer.open{right:0}
+.drawer .dhead2{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--rule)}
+.drawer .dhead2 b{font-size:15px}
+.drawer .dhead2 button{margin-left:auto;font-size:18px;line-height:1;color:var(--ink-2)}
+.drawer .dbody2{padding:16px 20px;font-size:12.5px;color:var(--ink-2);flex:1;overflow-y:auto}
+.drawer .wordlist{margin-top:10px;border-top:1px solid var(--rule)}
+.drawer .wordlist div{padding:7px 2px;border-bottom:1px solid var(--rule);font-family:var(--mono-ui);font-size:12px;color:var(--ink)}
+
+@media (max-width:1080px){
+  .typetally{display:none}
+  .files{width:220px}
+  .brand{min-width:140px}
+}
+</style>
+</head>
+<body>
+<!--
+  方向契约（impeccable · 检索工作台 · seed 0ac35cf0 · 用户钦定第一轮指派方向）
+  THESIS: 整个界面是一份检索结果——合同是语料，敏感信息是命中，审查即逐条裁定；
+          拒绝企业后台的卡片仪表盘排法。
+  OWN-WORLD: 冷白纸面 #FAFAF7 / 墨黑 #1C1C1A / 印泥朱红 #C03A2B 只给相位·主按钮·命中高亮；
+          类型四色取档案侧签（黛蓝/赭石/苔绿/紫灰）；宋体文书正文 + 雅黑 UI + 制表数字；
+          分割只用细规则线与直角。
+  STORY: 法务同事看清相位（扫描→审查→完成）与三类计数，逐条裁定命中，
+          确认后真抹除，拿到脱敏文件+映射表+审查报告三件套。
+  FIRST VIEWPORT: 案卷头（品牌｜命名相位带｜分段计数器+每类计数位）横贯顶部；
+          左 264px 文件侧签（含每文件命中数与错误态），右列命中行
+          （勾选+类型标签+宋体原文高亮+上下文+位置），底部执行栏主按钮可见。
+  FORM: new-work direction round，第一轮掷骰指派（bolder 重掷后由用户钦定回原指派），
+          seed 0ac35cf0；注入纪律：分段计数器、每类计数位、命名相位、
+          强调色只给命中本体、全屏反白只给完成瞬间。
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review,
+          the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+-->
+<div class="flash" id="flash"></div>
+
+<header class="masthead">
+  <div class="brand">
+    <h1>合同脱敏台</h1>
+    <small>8月对外批次 · 本地运行</small>
+  </div>
+  <nav class="phaseband" aria-label="流程相位">
+    <button class="phase" id="ph-scan"><span class="pip"></span><span class="name">扫描</span></button>
+    <span class="phasejoin"></span>
+    <button class="phase" id="ph-review" aria-current="step"><span class="pip"></span><span class="name">审查</span></button>
+    <span class="phasejoin"></span>
+    <button class="phase" id="ph-done"><span class="pip"></span><span class="name">完成</span></button>
+  </nav>
+  <div class="tally num" aria-label="批次计数">
+    <div class="seg"><b id="c-scanned">5</b><span>已扫文件</span></div>
+    <div class="seg warn"><b id="c-hits">23</b><span>命中</span></div>
+    <div class="seg"><b id="c-excluded">1</b><span>已排除</span></div>
+  </div>
+  <div class="typetally num" aria-label="分类计数">
+    <div class="row"><span class="dot" style="background:var(--cinnabar)"></span>金额<b id="t-amount">10</b></div>
+    <div class="row"><span class="dot" style="background:var(--lanulin)"></span>身份证<b id="t-idcard">2</b></div>
+    <div class="row"><span class="dot" style="background:var(--ochre)"></span>电话<b id="t-phone">7</b></div>
+    <div class="row"><span class="dot" style="background:var(--seal-green)"></span>银行账号<b id="t-bank">2</b></div>
+    <div class="row"><span class="dot" style="background:var(--violetgray)"></span>统一社会信用代码<b id="t-credit">2</b></div>
+  </div>
+</header>
+
+<main class="workspace" id="ws-review">
+  <aside class="files">
+    <div class="head">批次文件</div>
+    <div class="filelist" id="filelist"></div>
+    <div class="foot">
+      <div class="toggleline">
+        <span>NER 人名 / 机构名识别</span>
+        <button class="switch" id="ner-switch" aria-checked="false" role="switch" aria-label="NER 人名机构名识别"></button>
+      </div>
+      <div><button class="linkish" id="open-lexicon">管理排除词库（2 条）</button></div>
+    </div>
+  </aside>
+
+  <section class="hits">
+    <div class="hitsbar" id="hitsbar">
+      <button class="chip" data-f="all" aria-pressed="true">全部</button>
+      <button class="chip" data-f="AMOUNT" aria-pressed="false">金额</button>
+      <button class="chip" data-f="ID_CARD" aria-pressed="false">身份证</button>
+      <button class="chip" data-f="PHONE" aria-pressed="false">电话</button>
+      <button class="chip" data-f="BANK_ACCOUNT" aria-pressed="false">银行账号</button>
+      <button class="chip" data-f="CREDIT_CODE" aria-pressed="false">信用代码</button>
+      <span class="spacer"></span>
+      <span class="selinfo">已勾选 <b class="num" id="sel-count">0</b> / <span class="num" id="total-count">0</span> 处</span>
+    </div>
+    <div class="hitlist" id="hitlist"></div>
+    <div class="errline" id="errline">扫描件.pdf 第 1 页无文本层，疑似扫描件——已跳过。请先用 OCR 工具转出文字版再脱敏。</div>
+    <div class="autonote" id="autonote">
+      自动排除 1 处：<b>1234567890123</b>（采购订单号）未通过银行卡 Luhn 校验，未列入命中。如需强制抹除，请加入黑名单。
+    </div>
+  </section>
+</main>
+
+<main class="workspace" id="ws-empty" style="display:none">
+  <div class="empty-wrap">
+    <div class="dropzone">
+      <h2>把合同拖进来</h2>
+      <p>支持 .docx 与文字型 .pdf，可多选。扫描件与 .doc 旧格式会明确告知，不做静默处理。<br>全部识别在本机完成，文件不会离开这台电脑。</p>
+      <button class="btn primary" id="btn-pick">选择文件</button>
+    </div>
+  </div>
+</main>
+
+<main class="workspace" id="ws-scan" style="display:none">
+  <div class="empty-wrap">
+    <div class="scanline">
+      <span>正在扫描</span>
+      <span class="bar"><i></i></span>
+      <span class="num" id="scan-num">3 / 5</span>
+    </div>
+    <p style="color:var(--ink-2);font-size:12px">正则规则 + 中文大写金额逐行识别；NER 默认关闭。</p>
+  </div>
+</main>
+
+<main class="workspace" id="ws-done" style="display:none">
+  <div class="done-wrap">
+    <div class="done-stamp"><b>抹除完成</b><span class="num" id="done-stamp-n">23 处 · 4 个文件</span></div>
+    <p class="done-sub">PDF 从内容流真删除，不可复制恢复；Word 以占位符替换，保留格式。占位符全局一致。</p>
+    <div class="outrow">
+      <div><div class="oname">示例采购合同_脱敏.docx</div><div class="osub">10 处 · 格式保留</div></div>
+      <span class="ospacer"></span><button class="btn">保存到…</button>
+    </div>
+    <div class="outrow">
+      <div><div class="oname">示例服务合同_脱敏.pdf</div><div class="osub">8 处 · 内容流移除</div></div>
+      <span class="ospacer"></span><button class="btn">保存到…</button>
+    </div>
+    <div class="outrow">
+      <div><div class="oname">contract_harbin_脱敏.pdf</div><div class="osub">3 处 · 内容流移除</div></div>
+      <span class="ospacer"></span><button class="btn">保存到…</button>
+    </div>
+    <div class="outrow">
+      <div><div class="oname">offer-demo_脱敏.docx</div><div class="osub">2 处 · 格式保留</div></div>
+      <span class="ospacer"></span><button class="btn">保存到…</button>
+    </div>
+    <div class="outrow">
+      <div><div class="oname">8月对外批次_映射表.json</div><div class="osub">占位符 ↔ 原文，还原功能的接口</div></div>
+      <span class="ospacer"></span><button class="btn" id="btn-map">预览</button><button class="btn">保存到…</button>
+    </div>
+    <div class="outrow">
+      <div><div class="oname">8月对外批次_审查报告.md</div><div class="osub">每处命中的类型、位置与上下文</div></div>
+      <span class="ospacer"></span><button class="btn">保存到…</button>
+    </div>
+    <div class="mapview num" id="mapview">[
+  { "placeholder": "[金额#1]",  "original": "￥128,500.00", "file": "示例采购合同.docx", "location": "正文#6" },
+  { "placeholder": "[金额#2]",  "original": "壹拾贰万捌仟伍佰元整", "file": "示例采购合同.docx", "location": "正文#7" },
+  { "placeholder": "[身份证#1]", "original": "11010519900307891X", "file": "示例采购合同.docx", "location": "表格[2,2]" },
+  { "placeholder": "[电话#1]",  "original": "13812345678", "file": "示例采购合同.docx", "location": "表格[3,2]" },
+  { "placeholder": "[电话#2]",  "original": "13900001111", "file": "示例合同.pdf", "location": "第1页" }
+]</div>
+    <div style="margin-top:22px"><button class="linkish" id="btn-again">开始新批次</button></div>
+  </div>
+</main>
+
+<footer class="actionbar" id="actionbar">
+  <span class="pending">将抹除 <b class="num" id="pending-count">0</b> 处 · 已排除 <span class="num" id="excl-count">0</span> 处</span>
+  <span class="spacer"></span>
+  <button class="btn" id="btn-report">导出审查报告</button>
+  <button class="btn primary" id="btn-apply">执行抹除</button>
+</footer>
+
+<div class="veil" id="veil">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <div class="dhead" id="dlg-title">确认执行抹除？</div>
+    <div class="dbody">
+      将对 <b>4</b> 个文件执行 <b class="num">23</b> 处抹除：
+      <ul>
+        <li>生成脱敏文件（保留原格式）<span class="num-r">×4</span></li>
+        <li>生成映射表 JSON<span class="num-r">×1</span></li>
+        <li>生成审查报告 MD<span class="num-r">×1</span></li>
+      </ul>
+      <div class="dwarn">PDF 将从内容流真删除、不可恢复；请确认已勾选的每一处都核对过。此操作不联网，产物保存在本机。</div>
+    </div>
+    <div class="dfoot">
+      <button class="btn" id="dlg-cancel">取消</button>
+      <button class="btn primary" id="dlg-ok">确认抹除</button>
+    </div>
+  </div>
+</div>
+
+<aside class="drawer" id="drawer">
+  <div class="dhead2"><b>排除词库</b><button id="drawer-close" aria-label="关闭">×</button></div>
+  <div class="dbody2">
+    词库中的原文按<b>精确匹配</b>跳过，不抹除。适合长期积累的公开信息（服务热线、公开座机等）。
+    <div class="wordlist">
+      <div>400-810-1996</div>
+      <div>010-88886666</div>
+    </div>
+    <p style="margin-top:14px"><button class="linkish">打开词库文件（词库.txt）</button></p>
+  </div>
+</aside>
+
+<nav class="demonav" aria-label="原型状态切换">
+  <span class="cap">原型导航</span>
+  <button data-view="empty">空态</button>
+  <button data-view="scan">扫描中</button>
+  <button data-view="review">审查（主屏）</button>
+  <button data-view="done">完成</button>
+</nav>
+
+<script>
+/* ===== 演示数据（形制取自真实测试样本；全部为合成演示数据）===== */
+const TYPES = {
+  AMOUNT:"金额", ID_CARD:"身份证", PHONE:"电话",
+  BANK_ACCOUNT:"银行账号", CREDIT_CODE:"信用代码"
+};
+const FILES = [
+  { id:"f1", name:"示例采购合同.docx", err:null, auto:1, hits:[
+    {t:"AMOUNT", o:"￥128,500.00", c:"设备总价款为「￥128,500.00」，含税。", l:"正文#6"},
+    {t:"AMOUNT", o:"壹拾贰万捌仟伍佰元整", c:"上述总价大写：人民币「壹拾贰万捌仟伍佰元整」。", l:"正文#7"},
+    {t:"AMOUNT", o:"3.5 万元", c:"合同签订后 7 日内支付预付款「3.5 万元」。", l:"正文#9"},
+    {t:"AMOUNT", o:"93,500 元", c:"到货验收合格后支付尾款「93,500 元」。", l:"正文#9"},
+    {t:"AMOUNT", o:"5000 元", c:"履约保证金「5000 元」于质保期满后退还。", l:"正文#10"},
+    {t:"CREDIT_CODE", o:"91110108MA01B2C4XW", c:"甲方统一社会信用代码：「91110108MA01B2C4XW」", l:"表格[1,2]"},
+    {t:"ID_CARD", o:"11010519900307891X", c:"法定代表人 张伟民 「11010519900307891X」", l:"表格[2,2]"},
+    {t:"PHONE", o:"13812345678", c:"联系电话：「13812345678」", l:"表格[3,2]"},
+    {t:"PHONE", o:"021-65558899", c:"乙方联系电话：「021-65558899」", l:"表格[4,2]"},
+    {t:"BANK_ACCOUNT", o:"622202020011223349", c:"工商银行北京分行 「622202020011223349」", l:"表格[5,2]"},
+  ]},
+  { id:"f2", name:"示例服务合同.pdf", err:null, auto:0, hits:[
+    {t:"AMOUNT", o:"￥350,000.00", c:"服务费总额为「￥350,000.00」（含税）。", l:"第1页"},
+    {t:"AMOUNT", o:"叁拾伍万元整", c:"大写金额：人民币「叁拾伍万元整」。", l:"第1页"},
+    {t:"AMOUNT", o:"150,000 元", c:"首期款「150,000 元」于合同生效后支付。", l:"第1页"},
+    {t:"CREDIT_CODE", o:"91440101MA9Y2K7Q8R", c:"统一社会信用代码：「91440101MA9Y2K7Q8R」", l:"第1页"},
+    {t:"ID_CARD", o:"44010619881122334X", c:"乙方负责人身份证号：「44010619881122334X」", l:"第1页"},
+    {t:"PHONE", o:"13699998888", c:"项目负责人：李娜，电话「13699998888」", l:"第1页"},
+    {t:"PHONE", o:"020-83334455", c:"乙方联系电话：「020-83334455」", l:"第1页"},
+    {t:"BANK_ACCOUNT", o:"6225880137709987", c:"收款账户：招商银行广州分行「6225880137709987」", l:"第1页"},
+  ]},
+  { id:"f3", name:"示例合同.pdf", err:null, auto:1, hits:[
+    {t:"PHONE", o:"13900001111", c:"采购人（甲方）联系方式：「13900001111」", l:"第1页"},
+    {t:"PHONE", o:"13900002222", c:"供应商（乙方）联系方式：「13900002222」", l:"第1页"},
+    {t:"AMOUNT", o:"100000.00元", c:"主要标的单价：「100000.00元」", l:"第1页"},
+  ]},
+  { id:"f4", name:"offer-demo.docx", err:null, auto:0, hits:[
+    {t:"AMOUNT", o:"人民币30,000元", c:"您的月基本工资为「人民币30,000元」，税前。", l:"正文#15"},
+    {t:"PHONE", o:"138-0000-0000", c:"技术总监 李华 联系电话：「138-0000-0000」", l:"正文#27"},
+  ]},
+  { id:"f5", name:"扫描件.pdf", err:"第 1 页无文本层，疑似扫描件，已跳过。", auto:0, hits:[] },
+];
+
+const state = {
+  view:"review",       // empty | scan | review | done
+  fileId:"f1",         // f1..f4 或 all
+  filter:"all",
+  excluded:new Set(),  // "fileId:i"
+};
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+function fileHits(f){ return f.hits.map((h,i)=>({...h, key:f.id+":"+i})); }
+function allHits(){ return FILES.filter(f=>!f.err).flatMap(fileHits); }
+function shownHits(){
+  let hs = state.fileId==="all" ? allHits() : fileHits(FILES.find(f=>f.id===state.fileId));
+  if(state.filter!=="all") hs = hs.filter(h=>h.t===state.filter);
+  return hs;
+}
+function fmtType(t){ return TYPES[t]||t; }
+
+function renderFiles(){
+  const box = $("#filelist"); box.innerHTML = "";
+  const mk = (id, name, sub, count, err) => {
+    const b = document.createElement("button");
+    b.className = "filerow" + (err?" is-err":"");
+    b.setAttribute("aria-selected", state.fileId===id);
+    b.innerHTML = `<span class="sq"></span>
+      <span class="meta"><span class="fname">${name}</span>
+      <span class="fsub">${sub}</span></span>
+      <span class="fcount num">${count}</span>`;
+    b.onclick = ()=>{ state.fileId=id; renderAll(); };
+    box.appendChild(b);
+  };
+  mk("all","批次汇总","4 个文件 · 1 个跳过", allHits().length);
+  for(const f of FILES){
+    mk(f.id, f.name, f.err ? "扫描失败" : `${f.hits.length} 处命中`, f.err ? "—" : f.hits.length, f.err);
+  }
+}
+
+const TAGCLS = { AMOUNT:"amount", ID_CARD:"idcard", PHONE:"phone", BANK_ACCOUNT:"bank", CREDIT_CODE:"credit" };
+function renderHits(){
+  const list = $("#hitlist"); list.innerHTML = "";
+  const hs = shownHits();
+  $("#total-count").textContent = hs.length;
+  $("#autonote").style.display = (state.fileId==="all" || state.fileId==="f1" || state.fileId==="f3") ? "" : "none";
+  for(const h of hs){
+    const ex = state.excluded.has(h.key);
+    const row = document.createElement("div");
+    row.className = "hitrow" + (ex?" excluded":"");
+    row.innerHTML = `
+      <input type="checkbox" class="check" ${ex?"":"checked"} aria-label="抹除该处">
+      <div class="body">
+        <div class="line1">
+          <span class="tag t-${TAGCLS[h.t]}">${fmtType(h.t)}</span>
+          <span class="orig">${h.o}</span>
+          <span class="exlabel">已排除，不抹除</span>
+          <span class="loc num">${h.l}</span>
+        </div>
+        <div class="ctx">${h.c.replace(h.o, m=>`<mark>${m}</mark>`)}</div>
+      </div>`;
+    row.querySelector(".check").addEventListener("change", ev=>{
+      if(ev.target.checked) state.excluded.delete(h.key); else state.excluded.add(h.key);
+      renderAll();
+    });
+    list.appendChild(row);
+  }
+}
+
+function renderTally(){
+  const hs = allHits();
+  const per = t => hs.filter(h=>h.t===t).length;
+  $("#t-amount").textContent = per("AMOUNT");
+  $("#t-idcard").textContent = per("ID_CARD");
+  $("#t-phone").textContent = per("PHONE");
+  $("#t-bank").textContent = per("BANK_ACCOUNT");
+  $("#t-credit").textContent = per("CREDIT_CODE");
+  const checked = hs.filter(h=>!state.excluded.has(h.key)).length;
+  $("#c-hits").textContent = hs.length;
+  $("#c-excluded").textContent = state.excluded.size + 1; /* +1 Luhn 自动排除 */
+  $("#sel-count").textContent = shownHits().filter(h=>!state.excluded.has(h.key)).length;
+  $("#pending-count").textContent = checked;
+  $("#excl-count").textContent = state.excluded.size;
+  $("#btn-apply").textContent = `执行抹除（${checked}）`;
+  $("#btn-apply").disabled = checked===0;
+}
+
+function renderAll(){ renderFiles(); renderHits(); renderTally(); }
+
+/* ===== 视图切换 ===== */
+const VIEWS = { empty:"#ws-empty", scan:"#ws-scan", review:"#ws-review", done:"#ws-done" };
+function setView(v){
+  state.view = v;
+  for(const k in VIEWS) $(VIEWS[k]).style.display = (k===v)?"flex":"none";
+  $("#actionbar").style.display = (v==="review")?"flex":"none";
+  const ph = {empty:null,scan:"ph-scan",review:"ph-review",done:"ph-done"}[v];
+  $$(".phase").forEach(p=>{ p.removeAttribute("aria-current"); p.removeAttribute("data-done"); });
+  if(ph){ $("#" + ph).setAttribute("aria-current","step"); }
+  syncTally(v);
+  if(v==="done"){ $("#ph-scan").setAttribute("data-done","1"); $("#ph-review").setAttribute("data-done","1"); }
+  if(v==="review"){ $("#ph-scan").setAttribute("data-done","1"); }
+}
+
+/* 计数器随相位诚实变化：空态全零，扫描给已完成的部分值，审查/完成后回到全批值 */
+function syncTally(v){
+  const set=(ids,val)=>ids.forEach(id=>$("#"+id).textContent=val);
+  if(v==="empty"){
+    $("#c-scanned").textContent="0"; $("#c-hits").textContent="0"; $("#c-excluded").textContent="0";
+    document.querySelector("#c-hits").parentElement.classList.remove("warn");
+    set(["t-amount","t-idcard","t-phone","t-bank","t-credit"],"0");
+  }else if(v==="scan"){
+    $("#c-scanned").textContent="3/5"; $("#c-hits").textContent="21"; $("#c-excluded").textContent="0";
+    document.querySelector("#c-hits").parentElement.classList.add("warn");
+    set(["t-amount"],"9"); set(["t-idcard"],"2"); set(["t-phone"],"6"); set(["t-bank"],"2"); set(["t-credit"],"2");
+  }else{
+    document.querySelector("#c-hits").parentElement.classList.add("warn");
+    renderTally();
+  }
+}
+$$(".demonav button").forEach(b=> b.onclick = ()=>{ location.hash = "view=" + b.dataset.view; setView(b.dataset.view); });
+window.addEventListener("hashchange", ()=>{
+  const m = location.hash.match(/view=(\w+)/);
+  if(m && VIEWS[m[1]]) setView(m[1]);
+});
+$$(".phase").forEach(p=> p.onclick = ()=> setView(p.id.replace("ph-","")==="scan"?"scan":p.id.replace("ph-","")));
+$("#btn-pick").onclick = ()=> setView("scan");
+setTimeout(()=>{ if(state.view==="scan") setView("review"); }, 2600);
+
+/* ===== 抹除确认与完成 ===== */
+const veil = $("#veil");
+$("#btn-apply").onclick = ()=>{
+  const n = allHits().filter(h=>!state.excluded.has(h.key)).length;
+  const nf = new Set(allHits().filter(h=>!state.excluded.has(h.key)).map(h=>h.key.split(":")[0])).size;
+  $("#dlg-title").textContent = `确认执行抹除？`;
+  veil.querySelector(".dbody").innerHTML =
+    `将对 <b>${nf}</b> 个文件执行 <b class="num">${n}</b> 处抹除：
+      <ul>
+        <li>生成脱敏文件（保留原格式）<span class="num-r">×${nf}</span></li>
+        <li>生成映射表 JSON<span class="num-r">×1</span></li>
+        <li>生成审查报告 MD<span class="num-r">×1</span></li>
+      </ul>
+      <div class="dwarn">PDF 将从内容流真删除、不可恢复；请确认已勾选的每一处都核对过。此操作不联网，产物保存在本机。</div>`;
+  veil.classList.add("open");
+};
+$("#dlg-cancel").onclick = ()=> veil.classList.remove("open");
+$("#dlg-ok").onclick = ()=>{
+  veil.classList.remove("open");
+  const n = allHits().filter(h=>!state.excluded.has(h.key)).length;
+  const nf = new Set(allHits().filter(h=>!state.excluded.has(h.key)).map(h=>h.key.split(":")[0])).size;
+  $("#done-stamp-n").textContent = `${n} 处 · ${nf} 个文件`;
+  const fl = $("#flash"); fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go");
+  setTimeout(()=> setView("done"), 240);
+};
+$("#btn-map").onclick = ()=> $("#mapview").classList.toggle("open");
+$("#btn-again").onclick = ()=> setView("empty");
+$("#btn-report").onclick = ()=> alert("原型：导出 8月对外批次_审查报告.md");
+
+/* ===== 词库抽屉与 NER 开关 ===== */
+const drawer = $("#drawer");
+$("#open-lexicon").onclick = ()=> drawer.classList.add("open");
+$("#drawer-close").onclick = ()=> drawer.classList.remove("open");
+$("#ner-switch").onclick = e=>{
+  const on = e.currentTarget.getAttribute("aria-checked")==="true";
+  e.currentTarget.setAttribute("aria-checked", String(!on));
+};
+
+/* ===== 筛选 ===== */
+$$("#hitsbar .chip").forEach(c=> c.onclick = ()=>{
+  $$("#hitsbar .chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+  c.setAttribute("aria-pressed","true");
+  state.filter = c.dataset.f; renderHits(); renderTally();
+});
+
+renderAll();
+const hashView = (location.hash.match(/view=(\w+)/)||[])[1];
+setView(VIEWS[hashView] ? hashView : "review");
+if(/dialog=1/.test(location.hash)){ setView("review"); veil.classList.add("open"); }
+</script>
+</body>
+</html>

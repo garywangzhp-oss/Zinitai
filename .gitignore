@@ -1,0 +1,32 @@
+# ================= 环境 / 构建产物 =================
+.venv/
+venv/
+build/
+dist/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ================= 真实数据：绝不入库 =================
+# tests/real/      真实合同原文（海关采购、offer、劳动合同范本…）
+# tests/real_out/  真实脱敏产物；其中 *_映射表.json 是【明文个人/商业信息】
+tests/real/
+tests/real_out/
+tests/out/
+tests/out_exclude/
+tests/gui_test/
+
+# ================= 设计工具目录与 mockup 图片导出 =================
+# 截图无法逐像素核对是否含 PII，故不入库（对应的 .html 已脱敏，保留）
+.impeccable/
+gui/macos_mockup.png
+gui/notion_mockup.png
+gui/direction_gallery.png
+gui/make_icon_from_art.py
+
+# ================= 运行期产物 / 本机杂项 =================
+# 只忽略项目根目录那份运行期词库；tests/词库.txt 是测试夹具，保留
+/词库.txt
+node_modules/
+Thumbs.db
+.DS_Store

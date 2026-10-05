@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>熊猫护卷 · macOS 风格探索稿</title>
+<style>
+/* ============ macOS 设计令牌 ============ */
+:root{
+  --accent:#007AFF;
+  --accent-tint:rgba(0,122,255,.12);
+  --text:#1d1d1f;
+  --text2:rgba(60,60,67,.62);
+  --text3:rgba(60,60,67,.38);
+  --sep:rgba(0,0,0,.09);
+  --chrome:rgba(246,246,246,.74);
+  --sidebar:rgba(238,238,240,.55);
+  --content:#ffffff;
+  --green:#34C759;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei UI",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font:13px/1.55 var(--font);
+  /* 模拟 macOS 桌面壁纸，让毛玻璃有东西可透 */
+  background:
+    radial-gradient(900px 600px at 12% 18%, #b8c6ff 0%, transparent 60%),
+    radial-gradient(800px 700px at 88% 8%, #ffc6e0 0%, transparent 55%),
+    radial-gradient(1000px 800px at 70% 95%, #9fe8d8 0%, transparent 60%),
+    linear-gradient(160deg,#5b6bbf,#8f6bbf 55%,#4f8fbf);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px;
+}
+.num{font-variant-numeric:tabular-nums}
+
+/* ============ 窗口 ============ */
+.window{
+  width:1180px;height:760px;border-radius:12px;overflow:hidden;
+  box-shadow:0 32px 90px rgba(0,0,0,.45),0 4px 16px rgba(0,0,0,.22);
+  display:flex;flex-direction:column;
+  background:var(--content);
+}
+
+/* ---- 统一工具栏（毛玻璃） ---- */
+.toolbar{
+  flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;
+  background:var(--chrome);backdrop-filter:blur(28px) saturate(1.8);
+  -webkit-backdrop-filter:blur(28px) saturate(1.8);
+  border-bottom:1px solid var(--sep);position:relative;z-index:10;
+}
+.lights{display:flex;gap:8px;margin-right:10px}
+.light{width:12px;height:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;line-height:1;color:rgba(0,0,0,.55);user-select:none}
+.light.r{background:#FF5F57}.light.y{background:#FEBC2E}.light.g{background:#28C840}
+.lights .light::before{opacity:0;transition:opacity .12s}
+.lights:hover .light::before{opacity:1}
+.light.r::before{content:"×"}.light.y::before{content:"−"}.light.g::before{content:"+"}
+
+.app-title{font-size:13px;font-weight:700;letter-spacing:.01em;margin-right:6px}
+
+.seg{
+  display:flex;background:rgba(0,0,0,.055);border-radius:8px;padding:2px;gap:2px;
+  position:absolute;left:50%;transform:translateX(-50%);
+}
+.seg button{
+  border:0;background:transparent;font:inherit;font-size:12px;color:var(--text);
+  padding:3px 16px;border-radius:6px;cursor:pointer;
+}
+.seg button[aria-pressed="true"]{
+  background:#fff;color:var(--text);box-shadow:0 1px 2.5px rgba(0,0,0,.22);
+  font-weight:600;
+}
+.toolbar .spacer{flex:1}
+.search{
+  display:flex;align-items:center;gap:6px;width:170px;height:26px;padding:0 8px;
+  background:rgba(0,0,0,.055);border-radius:6px;color:var(--text3);font-size:12px;
+}
+.tb-btn{
+  border:0;background:transparent;font:inherit;font-size:12.5px;color:var(--text);
+  padding:4px 10px;border-radius:6px;cursor:pointer;
+}
+.tb-btn:hover{background:rgba(0,0,0,.06)}
+.tb-primary{
+  border:0;background:var(--accent);color:#fff;font:inherit;font-size:12.5px;font-weight:600;
+  padding:5px 14px;border-radius:6px;cursor:pointer;
+}
+.tb-primary:hover{background:#0071ec}
+
+/* ---- 主体：毛玻璃侧栏 + 白色内容 ---- */
+.body{flex:1;min-height:0;display:flex}
+
+.sidebar{
+  flex:none;width:218px;background:var(--sidebar);
+  backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);
+  border-right:1px solid var(--sep);
+  display:flex;flex-direction:column;padding:10px 8px 8px;
+}
+.side-head{
+  font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.02em;
+  padding:4px 8px 6px;
+}
+.filerow{
+  display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:6px;
+  cursor:pointer;color:var(--text);border:0;background:transparent;font:inherit;width:100%;text-align:left;
+}
+.filerow:hover{background:rgba(0,0,0,.05)}
+.filerow[aria-selected="true"]{background:var(--accent);color:#fff}
+.filerow[aria-selected="true"] .sub,.filerow[aria-selected="true"] .badge{color:rgba(255,255,255,.85)}
+.filerow svg{flex:none;opacity:.75}
+.filerow .meta{flex:1;min-width:0}
+.filerow .name{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.filerow .sub{display:block;font-size:10.5px;color:var(--text2)}
+.filerow .badge{
+  font-size:10.5px;background:rgba(0,0,0,.28);color:#fff;border-radius:9px;padding:1px 7px;
+}
+.side-gap{height:14px}
+.side-row{
+  display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:6px;
+  font-size:12.5px;color:var(--text);cursor:pointer;
+}
+.side-row:hover{background:rgba(0,0,0,.05)}
+.side-row svg{opacity:.6}
+.side-foot{margin-top:auto;padding:8px 8px 2px;font-size:10.5px;color:var(--text3)}
+
+/* macOS 开关 */
+.switch{
+  margin-left:auto;width:34px;height:21px;border-radius:11px;background:rgba(0,0,0,.16);
+  position:relative;border:0;cursor:pointer;transition:background .18s;flex:none;
+}
+.switch::after{
+  content:"";position:absolute;top:1.5px;left:1.5px;width:18px;height:18px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .18s;
+}
+.switch[aria-checked="true"]{background:var(--green)}
+.switch[aria-checked="true"]::after{transform:translateX(13px)}
+
+/* ---- 内容区 ---- */
+.content{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--content)}
+.content-head{
+  flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--sep);
+}
+.seg.sm button{padding:3px 11px;font-size:11.5px}
+.content-head .spacer{flex:1}
+.selinfo{font-size:11.5px;color:var(--text2)}
+.selinfo b{color:var(--text)}
+
+.hitlist{flex:1;min-height:0;overflow-y:auto;padding:8px 12px}
+.hitrow{
+  display:flex;align-items:flex-start;gap:12px;padding:9px 12px;border-radius:8px;
+  transition:background .1s;
+}
+.hitrow:hover{background:rgba(0,0,0,.045)}
+.hitrow .check{
+  margin-top:3px;flex:none;width:15px;height:15px;appearance:none;-webkit-appearance:none;
+  border:1px solid rgba(0,0,0,.25);border-radius:4px;cursor:pointer;background:#fff;
+}
+.hitrow .check:checked{
+  background:var(--accent) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 11 11"><path d="M2 5.8 4.4 8.2 9 3.2" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>') center no-repeat;
+  border-color:var(--accent);
+}
+.hitrow .body{flex:1;min-width:0}
+.hitrow .line1{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.tag{
+  font-size:10.5px;font-weight:600;padding:1.5px 7px;border-radius:5px;flex:none;
+}
+.t-amount{background:rgba(255,59,48,.13);color:#D70015}
+.t-idcard{background:rgba(0,122,255,.13);color:#0040DD}
+.t-phone{background:rgba(255,149,0,.16);color:#C93400}
+.t-bank{background:rgba(52,199,89,.15);color:#1F7A34}
+.t-credit{background:rgba(175,82,222,.14);color:#8944AB}
+.t-email{background:rgba(0,160,176,.14);color:#00707C}
+.hitrow .orig{font-size:13.5px;font-weight:600;background:var(--accent-tint);padding:0 4px;border-radius:3px}
+.hitrow.excluded .orig{background:none}
+.hitrow .loc{margin-left:auto;font-size:11px;color:var(--text3)}
+.hitrow .ctx{font-size:12px;color:var(--text2);margin-top:2px}
+.hitrow .ctx mark{background:none;color:var(--text);font-weight:600}
+.hitrow.excluded{opacity:.45}
+.hitrow .exlabel{display:none;font-size:11px;color:var(--text2);margin-left:8px}
+.hitrow.excluded .exlabel{display:inline}
+
+/* 自动排除注记 */
+.autonote{
+  margin:10px 16px;background:rgba(255,149,0,.09);border:1px solid rgba(255,149,0,.35);
+  border-radius:8px;padding:8px 12px;font-size:11.5px;color:#8a6100;display:none;
+}
+.autonote.open{display:block}
+
+/* 空态 */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text2)}
+.empty h2{font-size:22px;font-weight:700;color:var(--text)}
+.empty p{font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="window">
+  <header class="toolbar">
+    <div class="lights"><span class="light r"></span><span class="light y"></span><span class="light g"></span></div>
+    <span class="app-title">熊猫护卷</span>
+    <nav class="seg" aria-label="流程相位">
+      <button aria-pressed="false">扫描</button>
+      <button aria-pressed="true">审查</button>
+      <button aria-pressed="false">完成</button>
+    </nav>
+    <span class="spacer"></span>
+    <div class="search">
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.4" stroke="currentColor" stroke-width="1.6"/><path d="m9.4 9.4 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      搜索
+    </div>
+    <button class="tb-btn">报告</button>
+    <button class="tb-primary">执行抹除（7）</button>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="side-head">批次文件</div>
+      <button class="filerow" aria-selected="true">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="1.5" width="11" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="meta"><span class="name">批次汇总</span><span class="sub">1 个文件 · 0 跳过</span></span>
+        <span class="badge num">7</span>
+      </button>
+      <button class="filerow" aria-selected="false">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="1.5" width="11" height="13" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5.5 5h5M5.5 8h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="meta"><span class="name">Purchase+Contract…Final.pdf</span><span class="sub">7 处命中</span></span>
+        <span class="badge num">7</span>
+      </button>
+      <div class="side-gap"></div>
+      <div class="side-head">工具</div>
+      <div class="side-row">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7M7 8.5 4.2 5.9M7 8.5l2.8-2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5v1.2c0 .7.6 1.3 1.3 1.3h7.4c.7 0 1.3-.6 1.3-1.3v-1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        NER 人名 / 机构名识别
+        <button class="switch" id="ner" aria-checked="false" role="switch" aria-label="NER"></button>
+      </div>
+      <div class="side-row">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="3" width="11" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="m2 4 5 4 5-4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        管理排除词库
+      </div>
+      <div class="side-foot">作者：Gary Wang　版本 V0.10</div>
+    </aside>
+
+    <section class="content">
+      <div class="content-head">
+        <nav class="seg sm" aria-label="类型筛选">
+          <button aria-pressed="true">全部</button>
+          <button aria-pressed="false">金额</button>
+          <button aria-pressed="false">身份证</button>
+          <button aria-pressed="false">电话</button>
+          <button aria-pressed="false">银行账号</button>
+          <button aria-pressed="false">信用代码</button>
+          <button aria-pressed="false">邮箱</button>
+        </nav>
+        <span class="spacer"></span>
+        <span class="selinfo">已勾选 <b class="num">7</b> / <span class="num">7</span> 处</span>
+      </div>
+
+      <div class="hitlist" id="hitlist"></div>
+
+      <div class="autonote open" id="autonote">
+        自动排除 1 处：服务热线 400-810-1996 未列入命中（词库匹配）。
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* 真实扫描数据（Purchase+Contract，7 处） */
+const HITS = [
+  {t:"PHONE",  o:"13800000000",       c:"…Tel: +86-「13800000000」…", l:"第1页"},
+  {t:"EMAIL",  o:"contact@example.com",c:"…Email: 「contact@example.com」…", l:"第1页"},
+  {t:"AMOUNT", o:"CNY 449,770.46",    c:"…「CNY 449,770.46」…", l:"第1页"},
+  {t:"AMOUNT", o:"CNY32,449.54",      c:"…「CNY32,449.54」…", l:"第1页"},
+  {t:"AMOUNT", o:"CNY482,220.00",     c:"…「CNY482,220.00」…", l:"第1页"},
+  {t:"AMOUNT", o:"人民币1,000.00 元",  c:"…自逾期之日起，甲方应按每日「人民币1,000.00 元」…", l:"第2页"},
+  {t:"AMOUNT", o:"RMB 1,000.00",      c:"…[「RMB 1,000.00」] per day…", l:"第3页"},
+];
+const TYPES = { AMOUNT:"金额", ID_CARD:"身份证", PHONE:"电话", BANK_ACCOUNT:"银行账号", CREDIT_CODE:"信用代码", EMAIL:"邮箱" };
+const TAGCLS = { AMOUNT:"amount", ID_CARD:"idcard", PHONE:"phone", BANK_ACCOUNT:"bank", CREDIT_CODE:"credit", EMAIL:"email" };
+const state = { filter:"all", excluded:new Set() };
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+function render(){
+  const list = $("#hitlist"); list.innerHTML = "";
+  const hs = HITS.filter(h => state.filter==="all" || h.t===state.filter);
+  $("#selinfo") && 0;
+  document.querySelector(".selinfo").innerHTML =
+    `已勾选 <b class="num">${hs.length - state.excluded.size}</b> / <span class="num">${hs.length}</span> 处`;
+  $(".tb-primary").textContent = `执行抹除（${HITS.length - state.excluded.size}）`;
+  for(const h of hs){
+    const key = h.t+h.o;
+    const ex = state.excluded.has(key);
+    const row = document.createElement("div");
+    row.className = "hitrow" + (ex?" excluded":"");
+    row.innerHTML = `
+      <input type="checkbox" class="check" ${ex?"":"checked"} aria-label="抹除该处">
+      <div class="body">
+        <div class="line1">
+          <span class="tag t-${TAGCLS[h.t]}">${TYPES[h.t]}</span>
+          <span class="orig">${esc(h.o)}</span>
+          <span class="exlabel">已排除</span>
+          <span class="loc num">${h.l}</span>
+        </div>
+        <div class="ctx">${esc(h.c).replace("「"+esc(h.o)+"」","「<mark>"+esc(h.o)+"</mark>」")}</div>
+      </div>`;
+    row.querySelector(".check").addEventListener("change", ev=>{
+      if(ev.target.checked) state.excluded.delete(key); else state.excluded.add(key);
+      render();
+    });
+    list.appendChild(row);
+  }
+}
+$$(".seg.sm button").forEach(b=> b.onclick = ()=>{
+  $$(".seg.sm button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  state.filter = b.textContent==="全部" ? "all" :
+    Object.keys(TYPES).find(k=>TYPES[k]===b.textContent) || "all";
+  render();
+});
+$$(".seg:not(.sm) button").forEach(b=> b.onclick = ()=>{
+  $$(".seg:not(.sm) button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+});
+$("#ner").onclick = e=>{
+  const on = e.currentTarget.getAttribute("aria-checked")==="true";
+  e.currentTarget.setAttribute("aria-checked", String(!on));
+};
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# 运行时（CLI + 脱敏引擎）
+pymupdf>=1.24
+python-docx>=1.1
+
+# 桌面 GUI（gui/app.py，README 推荐入口）
+pywebview>=5.0
+
+# 打包（可选，生成 dist/紫泥台.exe；spec 还要求已装 en_core_web_sm）
+# pyinstaller>=6.0
+
+# 可选：NER 人名/机构名识别（--ner 或 GUI 开关启用，装哪个管哪个语言）
+# spacy>=3.7            # 英文，另需: python -m spacy download en_core_web_sm
+# hanlp                  # 中文（模型较大）

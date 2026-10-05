@@ -1,0 +1,3 @@
+E:\zcodework\contract-redactor\.venv\Lib\site-packages\webview\util.py #160: valid_file_filter = r'^([\w ]+)\((\*(?:\.(?:\w+|\*))*(?:;\*(?:\.(?:\w+|\*))*)*)\)$'
+E:\zcodework\contract-redactor\.venv\Lib\site-packages\webview\util.py #161: match = re.search(valid_file_filter, file_type)
+E:\zcodework\contract-redactor\.venv\Lib\site-packages\webview\util.py #165: raise ValueError(f'{file_type} is not a valid file filter')
